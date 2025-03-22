@@ -1,4 +1,4 @@
-FROM alpine:3.11.6
+FROM alpine:3.21
 
 LABEL maintainer="Mark <mark.binlab@gmail.com>"
 
@@ -25,6 +25,9 @@ RUN addgroup -S -g ${GID} ${GROUP} \
     && mkdir -p ${HOST_KEYS_PATH} \
     && mkdir /etc/ssh/auth_principals \
     && echo "bastion" > /etc/ssh/auth_principals/bastion
+
+# Install postgresql client
+RUN apk add --no-cache postgresql17-client
 
 EXPOSE 22/tcp
 

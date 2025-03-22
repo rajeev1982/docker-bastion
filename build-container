@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+gen_build_tag() {
+    date=$(date +%Y%m%d%H%M%S)
+    echo ${date}
+}
+
+#######################################################################################################################
+
+FILE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+APPLICATION_NAME="bastion"
+APPLICATION_DIR=. # $(dirname "${FILE_DIR}") # Parent of file directory
+# REPOSITORY_URI="tradeeng/trade"
+REPOSITORY_URI="funistoeng/procure"
+BUILD_TAG="$(gen_build_tag)"
+
+image_tag="${REPOSITORY_URI}:${APPLICATION_NAME}-${BUILD_TAG}"
+platform="linux/amd64"
+push=FALSE
+clean=FALSE
+
+positional=()
+while [[ $# -gt 0 ]]; do
+    key="${1}"
+    
+    case ${key} in
+        -u|--push)
+            push=TRUE
+            shift # past argument
+        ;;
+        
+        -c|--clean)
+            clean=TRUE
+            shift # past argument
+        ;;
+        
+        -t|--tag)
+            image_tag="$2"
+            shift # past argument
+            shift # past value
+        ;;
+
+        -p|--platform)
+            platform="$2"
+            shift # past argument
+            shift # past value
+        ;;
+        
+        *)
+            echo "Unknown param: ${1}"
+            exit 1
+            # unknown option
+            positional+=("${1}") # save it in an array for later
+            shift                # past argument
+        ;;
+    esac
+done
+
+build_cmd="docker build"
+if [[ ${clean} == TRUE ]]; then
+    build_cmd+=" --no-cache"
+fi
+build_cmd+=" --platform ${platform} -f Dockerfile -t ${image_tag} ${APPLICATION_DIR}"
+
+echo "Image tag: ${image_tag}"
+echo "Platform: ${platform}"
+echo "Push container: ${push}"
+
+echo "Build command: ${build_cmd}"
+
+${build_cmd}
+if [[ $? != 0 ]]; then
+    echo "Error in building container: ${image_tag}"
+    exit 1
+fi
+echo "Successfully built container: ${image_tag}"
+
+if [[ ${push} == TRUE ]]; then
+    echo "Pushing container to repository"
+    docker push "${image_tag}"
+    if [[ $? != 0 ]]; then
+        echo "Error in pushing container: ${image_tag}"
+        exit 1
+    fi
+    echo "Successfully pushed container: ${image_tag}"
+fi
