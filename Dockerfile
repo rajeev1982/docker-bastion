@@ -26,7 +26,8 @@ RUN addgroup -S -g ${GID} ${GROUP} \
     && mkdir /etc/ssh/auth_principals \
     && echo "bastion" > /etc/ssh/auth_principals/bastion
 
-# Install postgresql client
+# Install custom packages
+RUN apk add --no-cache bash
 RUN apk add --no-cache postgresql17-client
 
 EXPOSE 22/tcp
